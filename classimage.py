@@ -1,16 +1,18 @@
-RED = '\033[31m'
-GREEN = '\033[32m'
-BLUE = '\033[34m'
-PURPLE = "\033[95m"
-RESET = '\033[0m'
-
 class Image:
     def __init__(self, model):
         self.model = model
     def predict(self, src:str, show=True, save=True, verbose=True):
+        """
+        Function to determine objects in a picture
+        src:str - path of image
+        show=True - determines whether to show preview of image
+        save=True
+        """
+        #Set variables
         self.show = show
         self.save = save
         self.verbose = verbose
+        #Start prediction
         self.results = self.model.predict(
             source = src,
             show = self.show,
