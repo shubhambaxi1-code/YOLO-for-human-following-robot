@@ -65,7 +65,7 @@ class Camera:
 
                 if "person" in names: # If human is detected
                     if class_name == "person" and confidence > confidence_threshold: #If YOLO is sure the object is human
-                        self.action = f"{BLUE}Idle{RESET}" 
+                        self.action = f"{BLUE}Idle{RESET}"
 
                         if person_height < (frame_height * self.human_far):
                             self.action = f"{GREEN}FORWARD{RESET}"
@@ -79,5 +79,5 @@ class Camera:
 
                         if not self.verbose:
                             print(f"{RED}DETECTED {class_name} ({confidence:.2f}) CENTER:({center_x},{center_y}) {self.action}{RESET}")
-                elif "person" not in names:
-                    print(f"{BLUE}No people detected{RESET}")
+            if "person" not in names:
+                print(f"{BLUE}No people detected{RESET}")
