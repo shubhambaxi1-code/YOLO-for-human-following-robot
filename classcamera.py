@@ -10,15 +10,15 @@ class Camera:
         self.human_far = far
         self.human_close = close
         self.model = model
-        self.show = show
-        self.save = save
+        self.window_show = show
+        self.window_save = save
         self.verbose = verbose
 
-    def predict(self,src:str):
+    def predict(self,src:str,confidence_threshold:float=0.35):
         self.results = self.model.predict(
             source = src,
-            show = self.show,
-            save = self.save,
+            show = self.window_show,
+            save = self.window_save,
             verbose = self.verbose,
             stream = True
         )
@@ -42,12 +42,12 @@ class Camera:
 
                 names.append(class_name)
 
-                center_x = int((xmin + xmax) / 2) 
+                center_x = int((xmin + xmax) / 2)
                 center_y = int((ymin + ymax) / 2)
 
                 if "person" in names:
-                    if class_name == "person" and confidence > 0.35: # If person is detected
-                        self.action = f"{BLUE}Idle{RESET}" # Set default value of action to stay idle
+                    if class_name == "person" and confidence > confidence_threshold:
+                        self.action = f"{BLUE}Idle{RESET}" 
 
                         if person_height < (frame_height * self.human_far):
                             self.action = f"{GREEN}FORWARD{RESET}"
