@@ -1,25 +1,26 @@
 # YOLO Camera Guidance
 
-A small Python application that uses Ultralytics YOLOv8 to detect people from a webcam and print basic position-based guidance in the terminal. Annotated predictions are displayed and saved for later review.
+A Python application built with Ultralytics YOLOv8. It detects objects from a webcam or image. In camera mode, it also prints basic position-based guidance for detected people.
+
+> **Safety note:** The guidance is experimental and based only on bounding-box size and position. Do not use it as a navigation, accessibility, or safety system.
 
 ## Features
 
-- Real-time person detection from the default webcam.
-- Terminal guidance based on a person's horizontal position and bounding-box height: `TURN LEFT`, `TURN RIGHT`, `FORWARD`, or `BACKWARD`.
-- Annotated prediction output saved by Ultralytics under `runs/detect/`.
-- YOLOv8 nano model (`yolov8n.pt`) for lightweight inference.
-
-These hints are experimental and use bounding-box geometry only. They are not a substitute for a navigation or safety system.
+- Detect objects using the YOLOv8 nano model (`yolov8n.pt`).
+- Display annotated camera or image predictions.
+- Save prediction output under `runs/detect/`.
+- Print basic guidance for people detected by the camera: `FORWARD`, `BACKWARD`, `TURN LEFT`, `TURN RIGHT`, or `Idle`.
 
 ## Requirements
 
 - Python 3.10 or later.
-- A webcam for the default camera mode.
-- A working camera backend and permission for the Python process to access the camera.
+- A webcam for camera mode.
+- A graphical desktop session to display prediction windows.
+- Internet access on first run if Ultralytics needs to download `yolov8n.pt`.
 
 ## Setup
 
-Create and activate a virtual environment, then install the dependency:
+Create and activate a virtual environment, then install Ultralytics:
 
 ```bash
 python3 -m venv .venv
@@ -28,83 +29,80 @@ python -m pip install --upgrade pip
 python -m pip install ultralytics
 ```
 
-On Windows PowerShell, activate it with:
+On Windows PowerShell, activate the environment with:
 
 ```powershell
 .venv\Scripts\Activate.ps1
 ```
 
-If you use Conda instead, create and activate a local environment with:
+## Run with a Camera
 
-```bash
-conda create --prefix .venv python=3.13 pip
-conda activate ./.venv
-python -m pip install ultralytics
-```
-
-The model file is expected at `yolov8n.pt` in the project directory. Ultralytics can download the model automatically on first use if it is not present.
-
-## Run
-
-With the environment activated:
+Run the application:
 
 ```bash
 python main.py
 ```
 
-The application opens the camera, displays an annotated preview, and prints guidance for detected people. Press `q` in the preview window to stop. If the camera does not open, check that it is connected, available to other applications, and permitted by your operating system.
+The camera source is configured near the top of `main.py`:
 
-## Saved Results
+```python
+src = 0
+```
 
-Predictions are saved under `runs/detect/`. Ultralytics creates a new `predict` directory for each run when a previous one already exists. These generated outputs are excluded from Git by `.gitignore`.
+Camera indexes start at `0`. For example, `0` selects the first camera and `1` selects a second camera if one is available. Use an integer for camera mode. The application currently does not enumerate or validate which camera indexes are available before starting YOLO; an invalid or inaccessible index may produce backend warnings instead of a clean `ConnectionError`.
+
+The camera window is displayed and annotated predictions are saved under `runs/detect/`. Press `q` in the preview window to stop. Pressing Ctrl+C in the terminal is also handled as a stop request.
+
+## Run with an Image
+
+In `main.py`, set `src` to an image path string instead of an integer:
+
+```python
+src = "Images/superman.png"
+```
+
+Use a path relative to the project directory or an absolute path. Image predictions are displayed and saved under `runs/detect/`. The position-based guidance is only implemented in camera mode.
+
+Example images are in the `Images/` directory.
+
+## Results and Model
+
+Ultralytics writes annotated predictions to `runs/detect/`, typically creating a new `predict` directory for each run. These generated results are ignored by Git.
+
+The application loads `yolov8n.pt` from the project directory. If the weights are not present, Ultralytics may download them on first use. That requires an internet connection.
 
 ## Troubleshooting
 
 ### `No module named 'ultralytics'`
 
-Activate the project's environment, then install through that environment's Python:
+Activate the project environment, then install the package into that environment:
 
 ```bash
 source .venv/bin/activate
 python -m pip install ultralytics
-python -m pip show ultralytics
 ```
 
-On Conda, activate the prefix with `conda activate ./.venv` first. Using `python -m pip` helps ensure the package is installed into the same environment that runs `main.py`.
+### The camera preview does not open
 
-### The camera does not open
+Check that the camera is connected, not already in use by another application, and permitted by the operating system. Try camera index `0` first. Camera access may not work in remote, containerized, or headless sessions.
 
-Close other applications using the camera and check operating-system camera permissions. The script uses camera index `0` by default; if your camera has a different index, update the camera source in `main.py`. Camera access may also fail in remote, containerized, or headless sessions.
+An invalid camera index can cause Ultralytics/OpenCV warnings such as `Waiting for stream`. Those warnings are not necessarily Python `ConnectionError` exceptions, so the current exception handler may not catch them.
 
-### The image path cannot be found
+### The image cannot be found
 
-Use a path relative to the project directory or an absolute path, and check the spelling and file extension. For example, `Images/superman.png` refers to a file inside the project's `Images/` folder.
+Check the spelling, file extension, and path. For example, `Images/superman.png` is relative to the project directory.
 
-### The model cannot be loaded
+### No person is detected
 
-Confirm that `yolov8n.pt` is in the project directory. If it is missing, Ultralytics may download it on first run; that requires an internet connection. Alternatively, set the model path to a weights file you already have.
+Try a well-lit scene with the person clearly visible. Detection quality depends on distance, lighting, occlusion, and the model. Camera guidance is printed only for detections whose confidence is above the configured threshold in `classcamera.py`.
 
-### The preview window does not appear
+## Project Structure
 
-The prediction call uses `show=True`, which requires a graphical desktop session. In a headless environment, disable preview display in `main.py` and use the saved output under `runs/detect/` instead.
-
-### No people are detected
-
-Try a well-lit image or scene with the person clearly visible and not too far from the camera. The project uses the lightweight `yolov8n.pt` model, so detection quality can vary with image conditions.
-
-## Image Input
-
-To run detection on an image instead of the webcam, set `relpath` near the top of `main.py` to an image path, for example:
-
-```python
-relpath = "Images/superman.png"
-```
-
-The image is displayed with detections and the annotated result is saved under `runs/detect/`. The terminal guidance loop currently runs only in webcam mode.
-
-## Project Files
-
-- `main.py` - Loads the model, runs inference, and prints person-position guidance.
-- `Images/` - Example input images.
-- `yolov8n.pt` - YOLOv8 nano model weights.
-- `runs/` - Generated prediction output; ignored by Git.
+| File or directory | Purpose |
+| --- | --- |
+| `main.py` | Loads the model and selects camera or image mode. |
+| `classcamera.py` | Runs camera predictions and prints person-position guidance. |
+| `classimage.py` | Runs image predictions. |
+| `Images/` | Example image inputs. |
+| `yolov8n.pt` | YOLOv8 nano model weights. |
+| `runs/` | Generated prediction output; ignored by Git. |
